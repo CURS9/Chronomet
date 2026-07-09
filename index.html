@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#14171a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SPLIT">
+<link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=SP&background=3ddc97&color=0b1410&size=180">
+
+<title>SPLIT — Çoklu Kronometre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14171a;
+    --panel:#1c2126;
+    --panel-2:#20262c;
+    --border:#272e34;
+    --text:#eef1f2;
+    --text-muted:#8a929a;
+    --text-faint:#525a61;
+    --danger:#ff6b6b;
+    --warn:#ffb238;
+  }
+
+  *{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background-color:var(--bg);
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size:42px 42px;
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding: max(36px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right)) max(60px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left));
+  }
+
+  header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:20px;
+    margin-bottom:36px;
+    flex-wrap:wrap;
+  }
+
+  .brand-mark{display:flex;flex-direction:column;gap:6px;}
+  .brand-title{
+    font-size:30px;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-title .dot-cluster{display:inline-flex;gap:4px;}
+  .brand-title .dot-cluster span{
+    width:7px;height:7px;border-radius:50%;display:inline-block;
+  }
+  .brand-sub{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+  }
+  .storage-status{
+    display:flex;align-items:center;gap:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    color:var(--text-faint);
+    margin-top:2px;
+  }
+  .storage-dot{ width:5px;height:5px;border-radius:50%;background:#3ddc97; flex-shrink:0; }
+  .storage-status.unavailable{ color:var(--warn); }
+  .storage-status.unavailable .storage-dot{ background:var(--warn); }
+
+  .header-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .stats-pill{
+    display:flex;align-items:center;gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--text-muted);
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    padding:8px 14px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .stats-pill .pulse-dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--text-faint);
+  }
+  .stats-pill.active .pulse-dot{
+    background:#3ddc97;
+    animation:pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(61,220,151,0.55); }
+    50%{ box-shadow:0 0 0 5px rgba(61,220,151,0); }
+  }
+
+  .btn-clear{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-faint);
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    padding:8px 14px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+    touch-action: manipulation;
+  }
+  .btn-clear:hover{ border-color:var(--danger); color:var(--danger); }
+
+  .btn-add{
+    display:flex;align-items:center;gap:8px;
+    background:#3ddc97;
+    color:#0b1410;
+    border:none;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    padding:11px 20px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:filter .15s ease, transform .15s ease;
+    touch-action: manipulation;
+  }
+  .btn-add:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+  .btn-add:active{ transform:translateY(0); }
+  .btn-add svg{ width:16px; height:16px; }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
+    gap:20px;
+  }
+
+  .card{
+    position:relative;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:22px 22px 20px;
+    overflow:hidden;
+    animation:cardIn .28s ease both;
+    contain:content;
+  }
+  .card.removing{
+    animation:cardOut .2s ease forwards;
+  }
+  @keyframes cardIn{
+    from{ opacity:0; transform:translateY(8px) scale(.98); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+  @keyframes cardOut{
+    to{ opacity:0; transform:translateY(-6px) scale(.97); }
+  }
+
+  .accent-bar{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:4px;
+    opacity:0.35;
+    transition:opacity .25s ease;
+  }
+  .card.is-running .accent-bar{ opacity:1; }
+
+  .card-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:2px;
+  }
+
+  .title-input{
+    flex:1;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid transparent;
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:17px;
+    padding:2px 0 6px;
+    outline:none;
+    min-width:0;
+    font-size: 16px;
+  }
+  .title-input:hover{ border-bottom-color:var(--border); }
+  .title-input:focus{ border-bottom-color:currentColor; }
+  .title-input::placeholder{ color:var(--text-faint); font-weight:500; }
+
+  .btn-close{
+    flex-shrink:0;
+    width:28px;height:28px;
+    border-radius:8px;
+    border:none;
+    background:transparent;
+    color:var(--text-faint);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s ease, color .15s ease;
+    touch-action: manipulation;
+  }
+  .btn-close:hover{ background:rgba(255,107,107,0.12); color:var(--danger); }
+  .btn-close svg{ width:14px; height:14px; }
+
+  .status-row{
+    display:flex;align-items:center;gap:7px;
+    margin:8px 0 6px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+  }
+  .status-row .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--text-faint);
+  }
+  .card.is-running .status-row .dot{
+    animation:pulse 1.4s ease-in-out infinite;
+  }
+
+  .time-display{
+    display:flex;
+    align-items:baseline;
+    gap:2px;
+    margin:10px 0 20px;
+    font-family:'JetBrains Mono', monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  .time-main{
+    font-size:44px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .time-cs{
+    font-size:20px;
+    font-weight:500;
+    color:var(--text-muted);
+  }
+
+  .controls{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:9px 16px;
+    border-radius:999px;
+    cursor:pointer;
+    border:1.5px solid transparent;
+    transition:filter .15s ease, transform .15s ease, background .15s ease, color .15s ease, border-color .15s ease;
+    touch-action: manipulation;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn:disabled{ opacity:0.35; cursor:not-allowed; transform:none; }
+
+  .btn-main{ color:#0b1410; }
+  .btn-main:not(:disabled):hover{ filter:brightness(1.1); }
+  .btn-main.is-running{
+    background:transparent !important;
+    color:var(--running-color, #fff);
+    border-color:var(--running-color, #fff);
+  }
+
+  .btn-lap{
+    background:transparent;
+    border-color:var(--border);
+    color:var(--text-muted);
+  }
+  .btn-lap:not(:disabled):hover{ border-color:var(--text-muted); color:var(--text); }
+
+  .btn-reset{
+    background:transparent;
+    border-color:transparent;
+    color:var(--text-faint);
+    text-decoration:underline;
+    text-decoration-style:dotted;
+    text-underline-offset:3px;
+    padding:9px 8px;
+  }
+  .btn-reset:not(:disabled):hover{ color:var(--text-muted); }
+
+  .laps{
+    margin-top:16px;
+    padding-top:12px;
+    border-top:1px dashed var(--border);
+  }
+  .laps-header{
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin-bottom:6px;
+  }
+  .laps-list{
+    max-height:130px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .laps-list::-webkit-scrollbar{ width:5px; }
+  .laps-list::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px; }
+
+  .lap-row{
+    display:flex;justify-content:space-between;gap:10px;
+    padding:6px 2px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--text-muted);
+    border-bottom:1px solid rgba(255,255,255,0.03);
+  }
+  .lap-row:first-child{ color:var(--text); }
+  .lap-row .lap-idx{ color:var(--text-faint); flex-shrink:0; }
+  .lap-row .lap-total{ color:var(--text-faint); }
+
+  .empty-state{
+    grid-column:1 / -1;
+    border:1.5px dashed var(--border);
+    border-radius:18px;
+    padding:64px 20px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  .empty-state .icon{
+    width:44px;height:44px;
+    border-radius:50%;
+    border:1.5px dashed var(--text-faint);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-faint);
+  }
+  .empty-state h2{
+    font-size:18px;font-weight:600;margin:0;
+  }
+  .empty-state p{
+    font-size:13.5px;color:var(--text-muted);margin:0;max-width:320px;
+    line-height:1.5;
+  }
+
+  .footnote{
+    margin:34px 0 0;
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--text-faint);
+    line-height:1.6;
+  }
+
+  button:focus-visible, input:focus-visible{
+    outline:2px solid #5eb1ff;
+    outline-offset:2px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .card, .pulse-dot, .status-row .dot{ animation:none !important; }
+  }
+
+  @media (max-width: 560px){
+    .wrap{ padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(60px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+    header{ align-items:flex-start; }
+    .time-main{ font-size:36px; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand-mark">
+        <div class="brand-title">
+          SPLIT
+          <span class="dot-cluster">
+            <span style="background:#3ddc97"></span>
+            <span style="background:#5eb1ff"></span>
+            <span style="background:#ffb238"></span>
+          </span>
+        </div>
+        <div class="brand-sub">Çok kanallı zaman tutucu</div>
+        <div class="storage-status" id="storageStatus">
+          <span class="storage-dot"></span>
+          <span id="storageStatusText">Yerel olarak kaydediliyor</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="stats-pill" id="statsPill">
+          <span class="pulse-dot"></span>
+          <span id="statsText">0 aktif</span>
+        </div>
+        <button class="btn-clear" id="clearBtn" title="Tüm kronometreleri ve kayıtlı veriyi sil">Verileri Temizle</button>
+        <button class="btn-add" id="addBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Yeni Kronometre
+        </button>
+      </div>
+    </header>
+
+    <div class="grid" id="grid"></div>
+
+    <p class="footnote">Kronometreler bu tarayıcıda (yerel depolama) otomatik saklanır — sayfa kapansa, yenilense veya tarayıcı çökse bile kaldığın yerden devam eder.<br>Not: farklı bir tarayıcı, gizli sekme veya önbellek temizliği kayıtlı veriyi sıfırlar; birden fazla sekme aynı anda açıksa en son kaydeden kazanır.</p>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+
+  const COLORS = ['#3ddc97', '#5eb1ff', '#ffb238', '#ff6b9d', '#b48bff', '#45d9d9'];
+  const STATUS_LABEL = { idle: 'HAZIR', running: 'ÇALIŞIYOR', paused: 'DURAKLATILDI' };
+  const STORAGE_KEY = 'split-stopwatch-state-v1';
+  const AUTOSAVE_INTERVAL_MS = 3000;
+  const SAVE_DEBOUNCE_MS = 400;
+
+  const grid = document.getElementById('grid');
+  const statsPill = document.getElementById('statsPill');
+  const statsText = document.getElementById('statsText');
+  const addBtn = document.getElementById('addBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const storageStatusEl = document.getElementById('storageStatus');
+  const storageStatusTextEl = document.getElementById('storageStatusText');
+
+  let timers = [];
+  let nextId = 1;
+  let colorIdx = 0;
+  let storageAvailable = true;
+  let loopActive = false;
+  let saveDebounceHandle = null;
+
+  const pad = (n, l = 2) => String(Math.floor(n)).padStart(l, '0');
+
+  // ---------- time math ----------
+
+  function formatElapsed(ms) {
+    ms = Math.max(0, ms);
+    const cs = Math.floor(ms / 10) % 100;
+    const totalSec = Math.floor(ms / 1000);
+    const s = totalSec % 60;
+    const totalMin = Math.floor(totalSec / 60);
+    const m = totalMin % 60;
+    const h = Math.floor(totalMin / 60);
+    return { h, m, s, cs };
+  }
+
+  function timeString(ms) {
+    const { h, m, s, cs } = formatElapsed(ms);
+    return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}.${pad(cs)}` : `${pad(m)}:${pad(s)}.${pad(cs)}`;
+  }
+
+  function getElapsed(t) {
+    if (!t.running || !t.startEpoch) return t.elapsedBase;
+    return t.elapsedBase + Math.max(0, Date.now() - t.startEpoch);
+  }
+
+  function renderTime(t) {
+    const { h, m, s, cs } = formatElapsed(getElapsed(t));
+    t.el.timeMain.textContent = h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+    t.el.timeCs.textContent = `.${pad(cs)}`;
+  }
+
+  // ---------- persistence ----------
+
+  function testStorageAvailability() {
+    try {
+      const testKey = '__split_test__';
+      localStorage.setItem(testKey, '1');
+      localStorage.removeItem(testKey);
+      storageAvailable = true;
+    } catch (e) {
+      storageAvailable = false;
+    }
+  }
+
+  function updateStorageStatusUI() {
+    if (storageAvailable) {
+      storageStatusEl.classList.remove('unavailable');
+      storageStatusTextEl.textContent = 'Yerel olarak kaydediliyor';
+    } else {
+      storageStatusEl.classList.add('unavailable');
+      storageStatusTextEl.textContent = 'Kalıcı depolama yok (yalnızca bu oturum)';
+    }
+  }
+
+  function buildSnapshot() {
+    return {
+      version: 1,
+      savedAt: Date.now(),
+      nextId,
+      colorIdx,
+      timers: timers.map(t => ({
+        id: t.id,
+        title: t.el.titleInput.value,
+        color: t.color,
+        elapsedBase: t.elapsedBase,
+        running: t.running,
+        startEpoch: t.startEpoch,
+        laps: t.laps
+      }))
+    };
+  }
+
+  function saveStateImmediate() {
+    if (saveDebounceHandle) { clearTimeout(saveDebounceHandle); saveDebounceHandle = null; }
+    if (!storageAvailable) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(buildSnapshot()));
+    } catch (e) {
+      storageAvailable = false;
+      updateStorageStatusUI();
+      console.warn('SPLIT: durum kaydedilemedi, yalnızca-bellek moduna geçildi.', e);
+    }
+  }
+
+  function scheduleSave() {
+    if (saveDebounceHandle) clearTimeout(saveDebounceHandle);
+    saveDebounceHandle = setTimeout(saveStateImmediate, SAVE_DEBOUNCE_MS);
+  }
+
+  function loadState() {
+    if (!storageAvailable) return null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || data.version !== 1 || !Array.isArray(data.timers)) return null;
+      return data;
+    } catch (e) {
+      console.warn('SPLIT: kayıtlı veri okunamadı ya da bozuk, sıfırdan başlanıyor.', e);
+      return null;
+    }
+  }
+
+  function sanitizeTimerData(st) {
+    if (!st || typeof st !== 'object') return null;
+    const id = Number.isFinite(st.id) ? st.id : null;
+    const title = typeof st.title === 'string' ? st.title.slice(0, 60) : '';
+    const color = typeof st.color === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(st.color) ? st.color : null;
+    const elapsedBase = Number.isFinite(st.elapsedBase) && st.elapsedBase >= 0 ? st.elapsedBase : 0;
+    const running = !!st.running;
+    let startEpoch = Number.isFinite(st.startEpoch) ? st.startEpoch : null;
+    if (running && !startEpoch) startEpoch = Date.now();
+    const laps = Array.isArray(st.laps)
+      ? st.laps
+          .filter(l => l && Number.isFinite(l.total) && Number.isFinite(l.split))
+          .map(l => ({ total: l.total, split: l.split }))
+      : [];
+    return { id, title, color, elapsedBase, running, startEpoch, laps };
+  }
+
+  // ---------- UI state helpers ----------
+
+  function updateStats() {
+    const runningCount = timers.filter(t => t.running).length;
+    statsText.textContent = runningCount === 1 ? '1 aktif' : `${runningCount} aktif`;
+    statsPill.classList.toggle('active', runningCount > 0);
+  }
+
+  function updateEmptyState() {
+    let empty = grid.querySelector('.empty-state');
+    if (timers.length === 0) {
+      if (!empty) {
+        empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = `
+          <div class="icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <h2>Henüz kronometre yok</h2>
+          <p>Aynı anda birden fazla süreyi takip etmek için ilk kronometreni oluştur — her birine kendi başlığını verebilirsin.</p>
+        `;
+        grid.appendChild(empty);
+      }
+    } else if (empty) {
+      empty.remove();
+    }
+  }
+
+  function setButtonStates(t) {
+    const { mainBtn, lapBtn, resetBtn } = t.el;
+    mainBtn.textContent = t.running ? 'Duraklat' : (t.elapsedBase > 0 ? 'Devam Et' : 'Başlat');
+    mainBtn.classList.toggle('is-running', t.running);
+    mainBtn.style.setProperty('--running-color', t.color);
+    mainBtn.style.background = t.running ? 'transparent' : t.color;
+
+    lapBtn.disabled = !t.running;
+    resetBtn.disabled = t.running || (t.elapsedBase === 0 && t.laps.length === 0);
+
+    t.el.statusDotEl.style.background = t.running ? t.color : '';
+    t.el.statusTextEl.textContent = t.running
+      ? STATUS_LABEL.running
+      : (t.elapsedBase > 0 || t.laps.length > 0 ? STATUS_LABEL.paused : STATUS_LABEL.idle);
+  }
+
+  // ---------- render loop ----------
+
+  function renderAllRunning() {
+    for (const t of timers) if (t.running) renderTime(t);
+  }
+
+  function tick() {
+    const anyRunning = timers.some(t => t.running);
+    if (!anyRunning) { loopActive = false; return; }
+    renderAllRunning();
+    requestAnimationFrame(tick);
+  }
+
+  function ensureLoop() {
+    if (!loopActive) {
+      loopActive = true;
+      requestAnimationFrame(tick);
+    }
+  }
+
+  // ---------- actions ----------
+
+  function toggleStart(t) {
+    if (!t.running) {
+      t.running = true;
+      t.startEpoch = Date.now();
+      t.el.card.classList.add('is-running');
+      ensureLoop();
+    } else {
+      t.elapsedBase += Math.max(0, Date.now() - t.startEpoch);
+      t.running = false;
+      t.startEpoch = null;
+      t.el.card.classList.remove('is-running');
+    }
+    setButtonStates(t);
+    renderTime(t);
+    updateStats();
+    saveStateImmediate();
+  }
+
+  function addLap(t) {
+    if (!t.running) return;
+    const total = getElapsed(t);
+    const prevTotal = t.laps.length ? t.laps[t.laps.length - 1].total : 0;
+    const split = total - prevTotal;
+    t.laps.push({ total, split });
+
+    t.el.lapsSection.style.display = 'block';
+    t.el.lapsCount.textContent = t.laps.length;
+    appendLapRow(t, t.laps.length, split, total);
+    saveStateImmediate();
+  }
+
+  function appendLapRow(t, index, split, total) {
+    const row = document.createElement('div');
+    row.className = 'lap-row';
+    row.innerHTML = `
+      <span class="lap-idx">T${index}</span>
+      <span class="lap-split">${timeString(split)}</span>
+      <span class="lap-total">${timeString(total)}</span>
+    `;
+    t.el.lapsList.insertBefore(row, t.el.lapsList.firstChild);
+  }
+
+  function resetTimer(t) {
+    if (t.running) return;
+    t.elapsedBase = 0;
+    t.laps = [];
+    t.el.lapsList.innerHTML = '';
+    t.el.lapsSection.style.display = 'none';
+    renderTime(t);
+    setButtonStates(t);
+    saveStateImmediate();
+  }
+
+  function removeTimer(t) {
+    t.el.card.classList.add('removing');
+    setTimeout(() => {
+      t.el.card.remove();
+      timers = timers.filter(x => x.id !== t.id);
+      updateEmptyState();
+      updateStats();
+      saveStateImmediate();
+    }, 180);
+  }
+
+  function clearAllData() {
+    if (!window.confirm('Tüm kronometreler ve kayıtlı veriler silinsin mi? Bu işlem geri alınamaz.')) return;
+    timers.slice().forEach(t => t.el.card.remove());
+    timers = [];
+    nextId = 1;
+    colorIdx = 0;
+    if (storageAvailable) {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    }
+    updateEmptyState();
+    updateStats();
+    createTimerCard({ title: 'Kronometre 1' });
+    saveStateImmediate();
+  }
+
+  // ---------- card creation ----------
+
+  function createTimerCard(opts) {
+    opts = opts || {};
+    const isRestore = Number.isFinite(opts.id);
+    const color = opts.color || COLORS[colorIdx % COLORS.length];
+    if (!opts.color) colorIdx++;
+
+    let id;
+    if (isRestore) {
+      id = opts.id;
+      if (id >= nextId) nextId = id + 1;
+    } else {
+      id = nextId++;
+    }
+
+    const t = {
+      id,
+      color,
+      elapsedBase: Number.isFinite(opts.elapsedBase) ? opts.elapsedBase : 0,
+      running: !!opts.running,
+      startEpoch: opts.startEpoch || null,
+      laps: Array.isArray(opts.laps) ? opts.laps.slice() : []
+    };
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="accent-bar" style="background:${color}"></div>
+      <div class="card-top">
+        <input class="title-input" type="text" maxlength="60" style="color:${color}" placeholder="Kronometre adı">
+        <button class="btn-close" title="Kronometreyi sil" aria-label="Kronometreyi sil">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+        </button>
+      </div>
+      <div class="status-row">
+        <span class="dot"></span>
+        <span class="status-text">HAZIR</span>
+      </div>
+      <div class="time-display">
+        <span class="time-main">00:00</span>
+        <span class="time-cs">.00</span>
+      </div>
+      <div class="controls">
+        <button class="btn btn-main">Başlat</button>
+        <button class="btn btn-lap" disabled>Tur</button>
+        <button class="btn btn-reset" disabled>Sıfırla</button>
+      </div>
+      <div class="laps" style="display:none">
+        <div class="laps-header">
+          <span>Turlar</span>
+          <span><span class="laps-count">0</span> tur</span>
+        </div>
+        <div class="laps-list"></div>
+      </div>
+    `;
+
+    t.el = {
+      card,
+      titleInput: card.querySelector('.title-input'),
+      statusDotEl: card.querySelector('.status-row .dot'),
+      statusTextEl: card.querySelector('.status-text'),
+      timeMain: card.querySelector('.time-main'),
+      timeCs: card.querySelector('.time-cs'),
+      mainBtn: card.querySelector('.btn-main'),
+      lapBtn: card.querySelector('.btn-lap'),
+      resetBtn: card.querySelector('.btn-reset'),
+      lapsSection: card.querySelector('.laps'),
+      lapsList: card.querySelector('.laps-list'),
+      lapsCount: card.querySelector('.laps-count')
+    };
+
+    t.el.titleInput.value = opts.title || `Kronometre ${id}`;
+
+    t.el.mainBtn.style.background = color;
+    t.el.mainBtn.style.setProperty('--running-color', color);
+
+    t.el.mainBtn.addEventListener('click', () => toggleStart(t));
+    t.el.lapBtn.addEventListener('click', () => addLap(t));
+    t.el.resetBtn.addEventListener('click', () => resetTimer(t));
+    t.el.card.querySelector('.btn-close').addEventListener('click', () => removeTimer(t));
+    t.el.titleInput.addEventListener('input', scheduleSave);
+    t.el.titleInput.addEventListener('blur', saveStateImmediate);
+
+    if (t.running) card.classList.add('is-running');
+
+    t.laps.forEach((lap, i) => appendLapRow(t, i + 1, lap.split, lap.total));
+    if (t.laps.length > 0) {
+      t.el.lapsSection.style.display = 'block';
+      t.el.lapsCount.textContent = t.laps.length;
+    }
+
+    timers.push(t);
+    updateEmptyState();
+    grid.appendChild(card);
+    setButtonStates(t);
+    renderTime(t);
+    updateStats();
+    return t;
+  }
+
+  // ---------- wiring ----------
+
+  addBtn.addEventListener('click', () => {
+    const t = createTimerCard({ title: `Kronometre ${timers.length + 1}` });
+    t.el.titleInput.focus();
+    t.el.titleInput.select();
+    t.el.card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    saveStateImmediate();
+  });
+
+  clearBtn.addEventListener('click', clearAllData);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      saveStateImmediate();
+    } else {
+      renderAllRunning();
+    }
+  });
+  window.addEventListener('pagehide', saveStateImmediate);
+  setInterval(() => { if (timers.some(t => t.running)) saveStateImmediate(); }, AUTOSAVE_INTERVAL_MS);
+
+  // ---------- boot ----------
+
+  function init() {
+    testStorageAvailability();
+    updateStorageStatusUI();
+
+    const saved = loadState();
+    let restoredAny = false;
+
+    if (saved && saved.timers.length) {
+      try {
+        nextId = Number.isFinite(saved.nextId) ? saved.nextId : 1;
+        colorIdx = Number.isFinite(saved.colorIdx) ? saved.colorIdx : 0;
+        saved.timers.forEach(raw => {
+          const clean = sanitizeTimerData(raw);
+          if (clean && clean.id !== null) { createTimerCard(clean); restoredAny = true; }
+        });
+      } catch (e) {
+        console.warn('SPLIT: kayıtlı veriler geri yüklenirken hata oluştu, temiz başlatılıyor.', e);
+        timers.slice().forEach(t => t.el.card.remove());
+        timers = [];
+        nextId = 1;
+        colorIdx = 0;
+        restoredAny = false;
+      }
+    }
+
+    if (!restoredAny) {
+      createTimerCard({ title: 'Kronometre 1' });
+    }
+
+    if (timers.some(t => t.running)) ensureLoop();
+    saveStateImmediate();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
