@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="SPLIT">
 <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=SP&background=3ddc97&color=0b1410&size=180">
 
-<title>SPLIT — Çoklu Kronometre</title>
+<title>SPLIT — Multi Stopwatch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -397,6 +397,12 @@
     header{ align-items:flex-start; }
     .time-main{ font-size:36px; }
   }
+
+  @media (max-width: 950px) and (orientation: landscape) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 </head>
 <body>
@@ -411,28 +417,28 @@
             <span style="background:#ffb238"></span>
           </span>
         </div>
-        <div class="brand-sub">Çok kanallı zaman tutucu</div>
+        <div class="brand-sub">Multi-channel timekeeper</div>
         <div class="storage-status" id="storageStatus">
           <span class="storage-dot"></span>
-          <span id="storageStatusText">Yerel olarak kaydediliyor</span>
+          <span id="storageStatusText">Saving locally</span>
         </div>
       </div>
       <div class="header-actions">
         <div class="stats-pill" id="statsPill">
           <span class="pulse-dot"></span>
-          <span id="statsText">0 aktif</span>
+          <span id="statsText">0 active</span>
         </div>
-        <button class="btn-clear" id="clearBtn" title="Tüm kronometreleri ve kayıtlı veriyi sil">Verileri Temizle</button>
+        <button class="btn-clear" id="clearBtn" title="Delete all stopwatches and saved data">Clear Data</button>
         <button class="btn-add" id="addBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Yeni Kronometre
+          New Stopwatch
         </button>
       </div>
     </header>
 
     <div class="grid" id="grid"></div>
 
-    <p class="footnote">Kronometreler bu tarayıcıda (yerel depolama) otomatik saklanır — sayfa kapansa, yenilense veya tarayıcı çökse bile kaldığın yerden devam eder.<br>Not: farklı bir tarayıcı, gizli sekme veya önbellek temizliği kayıtlı veriyi sıfırlar; birden fazla sekme aynı anda açıksa en son kaydeden kazanır.</p>
+    <p class="footnote">Stopwatches are saved automatically in this browser (local storage) — even if the page is closed, refreshed, or the browser crashes, it will continue from where you left off.<br>Note: using a different browser, incognito tab, or clearing cache will reset the saved data; if multiple tabs are open at the same time, the one that saves last wins.</p>
   </div>
 
 <script>
@@ -440,7 +446,7 @@
   'use strict';
 
   const COLORS = ['#3ddc97', '#5eb1ff', '#ffb238', '#ff6b9d', '#b48bff', '#45d9d9'];
-  const STATUS_LABEL = { idle: 'HAZIR', running: 'ÇALIŞIYOR', paused: 'DURAKLATILDI' };
+  const STATUS_LABEL = { idle: 'READY', running: 'RUNNING', paused: 'PAUSED' };
   const STORAGE_KEY = 'split-stopwatch-state-v1';
   const AUTOSAVE_INTERVAL_MS = 3000;
   const SAVE_DEBOUNCE_MS = 400;
@@ -462,7 +468,6 @@
 
   const pad = (n, l = 2) => String(Math.floor(n)).padStart(l, '0');
 
-  // ---------- time math ----------
 
   function formatElapsed(ms) {
     ms = Math.max(0, ms);
@@ -491,7 +496,6 @@
     t.el.timeCs.textContent = `.${pad(cs)}`;
   }
 
-  // ---------- persistence ----------
 
   function testStorageAvailability() {
     try {
@@ -507,10 +511,10 @@
   function updateStorageStatusUI() {
     if (storageAvailable) {
       storageStatusEl.classList.remove('unavailable');
-      storageStatusTextEl.textContent = 'Yerel olarak kaydediliyor';
+      storageStatusTextEl.textContent = 'Saving locally';
     } else {
       storageStatusEl.classList.add('unavailable');
-      storageStatusTextEl.textContent = 'Kalıcı depolama yok (yalnızca bu oturum)';
+      storageStatusTextEl.textContent = 'No persistent storage (this session only)';
     }
   }
 
@@ -540,7 +544,7 @@
     } catch (e) {
       storageAvailable = false;
       updateStorageStatusUI();
-      console.warn('SPLIT: durum kaydedilemedi, yalnızca-bellek moduna geçildi.', e);
+      console.warn('SPLIT: failed to save state, switching to memory-only mode.', e);
     }
   }
 
@@ -558,7 +562,7 @@
       if (!data || data.version !== 1 || !Array.isArray(data.timers)) return null;
       return data;
     } catch (e) {
-      console.warn('SPLIT: kayıtlı veri okunamadı ya da bozuk, sıfırdan başlanıyor.', e);
+      console.warn('SPLIT: failed to read saved data or data corrupted, starting fresh.', e);
       return null;
     }
   }
@@ -580,11 +584,10 @@
     return { id, title, color, elapsedBase, running, startEpoch, laps };
   }
 
-  // ---------- UI state helpers ----------
 
   function updateStats() {
     const runningCount = timers.filter(t => t.running).length;
-    statsText.textContent = runningCount === 1 ? '1 aktif' : `${runningCount} aktif`;
+    statsText.textContent = runningCount === 1 ? '1 active' : `${runningCount} active`;
     statsPill.classList.toggle('active', runningCount > 0);
   }
 
@@ -598,8 +601,8 @@
           <div class="icon">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </div>
-          <h2>Henüz kronometre yok</h2>
-          <p>Aynı anda birden fazla süreyi takip etmek için ilk kronometreni oluştur — her birine kendi başlığını verebilirsin.</p>
+          <h2>No stopwatches yet</h2>
+          <p>Create your first stopwatch to track multiple times at once — you can give each one its own title.</p>
         `;
         grid.appendChild(empty);
       }
@@ -610,7 +613,7 @@
 
   function setButtonStates(t) {
     const { mainBtn, lapBtn, resetBtn } = t.el;
-    mainBtn.textContent = t.running ? 'Duraklat' : (t.elapsedBase > 0 ? 'Devam Et' : 'Başlat');
+    mainBtn.textContent = t.running ? 'Pause' : (t.elapsedBase > 0 ? 'Resume' : 'Start');
     mainBtn.classList.toggle('is-running', t.running);
     mainBtn.style.setProperty('--running-color', t.color);
     mainBtn.style.background = t.running ? 'transparent' : t.color;
@@ -624,7 +627,6 @@
       : (t.elapsedBase > 0 || t.laps.length > 0 ? STATUS_LABEL.paused : STATUS_LABEL.idle);
   }
 
-  // ---------- render loop ----------
 
   function renderAllRunning() {
     for (const t of timers) if (t.running) renderTime(t);
@@ -644,7 +646,6 @@
     }
   }
 
-  // ---------- actions ----------
 
   function toggleStart(t) {
     if (!t.running) {
@@ -681,7 +682,7 @@
     const row = document.createElement('div');
     row.className = 'lap-row';
     row.innerHTML = `
-      <span class="lap-idx">T${index}</span>
+      <span class="lap-idx">L${index}</span>
       <span class="lap-split">${timeString(split)}</span>
       <span class="lap-total">${timeString(total)}</span>
     `;
@@ -711,21 +712,20 @@
   }
 
   function clearAllData() {
-    if (!window.confirm('Tüm kronometreler ve kayıtlı veriler silinsin mi? Bu işlem geri alınamaz.')) return;
+    if (!window.confirm('Are you sure you want to delete all stopwatches and saved data? This action cannot be undone.')) return;
     timers.slice().forEach(t => t.el.card.remove());
     timers = [];
     nextId = 1;
     colorIdx = 0;
     if (storageAvailable) {
-      try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
     }
     updateEmptyState();
     updateStats();
-    createTimerCard({ title: 'Kronometre 1' });
+    createTimerCard({ title: 'Stopwatch 1' });
     saveStateImmediate();
   }
 
-  // ---------- card creation ----------
 
   function createTimerCard(opts) {
     opts = opts || {};
@@ -755,28 +755,28 @@
     card.innerHTML = `
       <div class="accent-bar" style="background:${color}"></div>
       <div class="card-top">
-        <input class="title-input" type="text" maxlength="60" style="color:${color}" placeholder="Kronometre adı">
-        <button class="btn-close" title="Kronometreyi sil" aria-label="Kronometreyi sil">
+        <input class="title-input" type="text" maxlength="60" style="color:${color}" placeholder="Stopwatch name">
+        <button class="btn-close" title="Delete stopwatch" aria-label="Delete stopwatch">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
         </button>
       </div>
       <div class="status-row">
         <span class="dot"></span>
-        <span class="status-text">HAZIR</span>
+        <span class="status-text">READY</span>
       </div>
       <div class="time-display">
         <span class="time-main">00:00</span>
         <span class="time-cs">.00</span>
       </div>
       <div class="controls">
-        <button class="btn btn-main">Başlat</button>
-        <button class="btn btn-lap" disabled>Tur</button>
-        <button class="btn btn-reset" disabled>Sıfırla</button>
+        <button class="btn btn-main">Start</button>
+        <button class="btn btn-lap" disabled>Lap</button>
+        <button class="btn btn-reset" disabled>Reset</button>
       </div>
       <div class="laps" style="display:none">
         <div class="laps-header">
-          <span>Turlar</span>
-          <span><span class="laps-count">0</span> tur</span>
+          <span>Laps</span>
+          <span><span class="laps-count">0</span> laps</span>
         </div>
         <div class="laps-list"></div>
       </div>
@@ -797,7 +797,7 @@
       lapsCount: card.querySelector('.laps-count')
     };
 
-    t.el.titleInput.value = opts.title || `Kronometre ${id}`;
+    t.el.titleInput.value = opts.title || `Stopwatch ${id}`;
 
     t.el.mainBtn.style.background = color;
     t.el.mainBtn.style.setProperty('--running-color', color);
@@ -826,10 +826,9 @@
     return t;
   }
 
-  // ---------- wiring ----------
 
   addBtn.addEventListener('click', () => {
-    const t = createTimerCard({ title: `Kronometre ${timers.length + 1}` });
+    const t = createTimerCard({ title: `Stopwatch ${timers.length + 1}` });
     t.el.titleInput.focus();
     t.el.titleInput.select();
     t.el.card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -848,7 +847,6 @@
   window.addEventListener('pagehide', saveStateImmediate);
   setInterval(() => { if (timers.some(t => t.running)) saveStateImmediate(); }, AUTOSAVE_INTERVAL_MS);
 
-  // ---------- boot ----------
 
   function init() {
     testStorageAvailability();
@@ -866,7 +864,7 @@
           if (clean && clean.id !== null) { createTimerCard(clean); restoredAny = true; }
         });
       } catch (e) {
-        console.warn('SPLIT: kayıtlı veriler geri yüklenirken hata oluştu, temiz başlatılıyor.', e);
+        console.warn('SPLIT: error restoring saved data, starting clean.', e);
         timers.slice().forEach(t => t.el.card.remove());
         timers = [];
         nextId = 1;
@@ -876,7 +874,7 @@
     }
 
     if (!restoredAny) {
-      createTimerCard({ title: 'Kronometre 1' });
+      createTimerCard({ title: 'Stopwatch 1' });
     }
 
     if (timers.some(t => t.running)) ensureLoop();
