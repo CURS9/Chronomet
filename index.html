@@ -122,7 +122,7 @@
     50%{ box-shadow:0 0 0 5px rgba(61,220,151,0); }
   }
 
-  .btn-notify, .btn-toggle{
+  .btn-notify{
     display:flex;align-items:center;gap:7px;
     background:transparent;
     border:1px solid var(--border);
@@ -137,11 +137,11 @@
     transition:border-color .15s ease, color .15s ease;
     touch-action: manipulation;
   }
-  .btn-notify:hover:not(:disabled), .btn-toggle:hover:not(:disabled){ border-color:var(--text-muted); color:var(--text-muted); }
+  .btn-notify:hover:not(:disabled){ border-color:var(--text-muted); color:var(--text-muted); }
   .btn-notify:disabled{ opacity:.45; cursor:not-allowed; }
-  .btn-notify .bell-dot, .btn-toggle .bell-dot{ width:6px;height:6px;border-radius:50%;background:var(--text-faint);flex-shrink:0; }
-  .btn-notify.on, .btn-toggle.on{ color:#3ddc97; border-color:rgba(61,220,151,0.4); }
-  .btn-notify.on .bell-dot, .btn-toggle.on .bell-dot{ background:#3ddc97; }
+  .btn-notify .bell-dot{ width:6px;height:6px;border-radius:50%;background:var(--text-faint);flex-shrink:0; }
+  .btn-notify.on{ color:#3ddc97; border-color:rgba(61,220,151,0.4); }
+  .btn-notify.on .bell-dot{ background:#3ddc97; }
   .btn-notify.blocked{ color:var(--warn); border-color:rgba(255,178,56,0.35); }
   .btn-notify.blocked .bell-dot{ background:var(--warn); }
 
@@ -182,20 +182,62 @@
     font-weight:700;
   }
 
-  .btn-clear{
-    background:transparent;
+  .goal-control{
+    display:flex;align-items:center;gap:2px;
+    background:rgba(255,255,255,0.03);
     border:1px solid var(--border);
-    color:var(--text-faint);
-    font-family:'Space Grotesk', sans-serif;
-    font-weight:600;
-    font-size:12.5px;
-    padding:8px 14px;
+    border-radius:999px;
+    padding:3px;
+    transition:border-color .15s ease;
+  }
+  .goal-control.active{ border-color:rgba(61,220,151,0.4); }
+  .goal-open{
+    display:flex;align-items:center;gap:7px;
+    background:transparent;
+    border:none;
+    padding:5px 11px;
     border-radius:999px;
     cursor:pointer;
-    transition:border-color .15s ease, color .15s ease;
+    color:var(--text-faint);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    font-weight:500;
+    white-space:nowrap;
     touch-action: manipulation;
   }
-  .btn-clear:hover{ border-color:var(--danger); color:var(--danger); }
+  .goal-open:hover{ color:var(--text); }
+  .goal-control.active .goal-open{ color:#3ddc97; font-weight:600; }
+  .goal-eyebrow{
+    font-size:9.5px;
+    letter-spacing:0.12em;
+    color:var(--text-faint);
+  }
+  .goal-field{
+    display:none;
+    width:118px;
+    background:transparent;
+    border:none;
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    padding:5px 11px;
+    outline:none;
+  }
+  .goal-field::placeholder{ color:var(--text-faint); }
+  .goal-field.invalid{ color:var(--danger); }
+  .goal-wipe{
+    display:none;
+    background:transparent;
+    border:none;
+    color:var(--text-faint);
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    line-height:1;
+    padding:0 8px 0 2px;
+    cursor:pointer;
+    touch-action: manipulation;
+  }
+  .goal-wipe:hover{ color:var(--danger); }
 
   .btn-add{
     display:flex;align-items:center;gap:8px;
@@ -346,33 +388,11 @@
   }
 
   .goal-row{
-    display:flex;
+    display:none;
     align-items:center;
     gap:8px;
     margin:0 0 16px;
     min-height:18px;
-  }
-  .goal-set{
-    background:transparent;
-    border:none;
-    padding:0;
-    color:var(--text-faint);
-    font-family:'JetBrains Mono', monospace;
-    font-size:10px;
-    letter-spacing:0.1em;
-    cursor:pointer;
-    text-decoration:underline;
-    text-decoration-style:dotted;
-    text-underline-offset:3px;
-    touch-action: manipulation;
-  }
-  .goal-set:hover{ color:var(--text-muted); }
-  .goal-view{
-    display:none;
-    align-items:center;
-    gap:8px;
-    flex:1;
-    min-width:0;
   }
   .goal-bar{
     flex:1;
@@ -394,36 +414,8 @@
     letter-spacing:0.08em;
     color:var(--text-faint);
     white-space:nowrap;
-    cursor:pointer;
   }
-  .goal-text:hover{ color:var(--text-muted); }
   .card.goal-done .goal-text{ color:var(--goal-color, var(--text)); }
-  .goal-clear{
-    flex-shrink:0;
-    background:transparent;border:none;padding:0 2px;
-    color:var(--text-faint);
-    font-family:'JetBrains Mono', monospace;
-    font-size:13px;line-height:1;
-    cursor:pointer;
-    touch-action: manipulation;
-  }
-  .goal-clear:hover{ color:var(--danger); }
-  .goal-input{
-    display:none;
-    flex:1;
-    min-width:0;
-    background:rgba(255,255,255,0.04);
-    border:1px solid var(--border);
-    border-radius:6px;
-    color:var(--text);
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    padding:4px 8px;
-    outline:none;
-  }
-  .goal-input::placeholder{ color:var(--text-faint); }
-  .goal-input:focus{ border-color:var(--text-muted); }
-  .goal-input.invalid{ border-color:var(--danger); color:var(--danger); }
 
   .controls{
     display:flex;
@@ -597,11 +589,14 @@
           <span class="bell-dot"></span>
           <span id="notifyBtnText">Enable notifications</span>
         </button>
-        <button class="btn-toggle" id="exclusiveBtn" aria-pressed="false" title="Solo mode: starting one stopwatch pauses every other running one">
-          <span class="bell-dot"></span>
-          <span>Solo mode</span>
-        </button>
-        <button class="btn-clear" id="clearBtn" title="Delete all stopwatches and saved data">Clear Data</button>
+        <div class="goal-control" id="goalControl" title="Shared goal applied to every stopwatch">
+          <button class="goal-open" id="goalOpenBtn" type="button">
+            <span class="goal-eyebrow">GOAL</span>
+            <span id="goalOpenText">SET</span>
+          </button>
+          <input class="goal-field" id="goalField" type="text" maxlength="12" spellcheck="false" placeholder="90m · 2h · 1:30" aria-label="Shared goal duration">
+          <button class="goal-wipe" id="goalWipeBtn" type="button" title="Remove goal" aria-label="Remove goal">&times;</button>
+        </div>
         <button class="btn-add" id="addBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           New Stopwatch
@@ -611,7 +606,7 @@
 
     <div class="grid" id="grid"></div>
 
-    <p class="footnote">Stopwatches are saved automatically in this browser (local storage) — even if the page is closed, refreshed, or the browser crashes, it will continue from where you left off.<br>Note: using a different browser, incognito tab, or clearing cache will reset the saved data; if multiple tabs are open at the same time, the one that saves last wins.<br>Solo mode keeps a single stopwatch running: starting one pauses the rest. Each stopwatch can also carry its own goal, which pings once when the total reaches it.<br>Notifications: a running stopwatch pings at the interval you pick; a paused one pings once if it is not restarted within that same interval. Starting, pausing, resetting, or changing the interval restarts the countdown. A stopwatch sitting at 00:00 never triggers anything, and the tab must stay open.</p>
+    <p class="footnote">Stopwatches are saved automatically in this browser (local storage) — even if the page is closed, refreshed, or the browser crashes, it will continue from where you left off.<br>Note: using a different browser, incognito tab, or clearing cache will reset the saved data; if multiple tabs are open at the same time, the one that saves last wins.<br>Only one stopwatch runs at a time: starting one automatically pauses the rest. The goal you set in the header applies to every stopwatch, and each one pings once when it reaches that goal. Taking a lap restarts both the goal bar and the reminder countdown from that point.<br>Notifications: a running stopwatch pings at the interval you pick; a paused one pings once if it is not restarted within that same interval. Starting, pausing, resetting, or changing the interval restarts the countdown. A stopwatch sitting at 00:00 never triggers anything, and the tab must stay open.</p>
   </div>
 
 <script>
@@ -633,10 +628,13 @@
   const statsPill = document.getElementById('statsPill');
   const statsText = document.getElementById('statsText');
   const addBtn = document.getElementById('addBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const exclusiveBtn = document.getElementById('exclusiveBtn');
   const notifyBtn = document.getElementById('notifyBtn');
   const notifyBtnText = document.getElementById('notifyBtnText');
+  const goalControl = document.getElementById('goalControl');
+  const goalOpenBtn = document.getElementById('goalOpenBtn');
+  const goalOpenText = document.getElementById('goalOpenText');
+  const goalField = document.getElementById('goalField');
+  const goalWipeBtn = document.getElementById('goalWipeBtn');
   const intervalSelect = document.getElementById('intervalSelect');
   const intervalButtons = Array.prototype.slice.call(intervalSelect.querySelectorAll('button'));
   const storageStatusEl = document.getElementById('storageStatus');
@@ -653,7 +651,7 @@
   let saveDebounceHandle = null;
   let notifyEnabled = true;
   let notifyStepMin = DEFAULT_INTERVAL_MIN;
-  let exclusiveMode = false;
+  let goalMs = null;
   let permissionAsked = false;
   let titleFlashHandle = null;
   let audioCtx = null;
@@ -684,6 +682,14 @@
   function clampMinutes(remaining, cap) {
     const mins = Math.ceil(Math.min(Math.max(remaining, 0), cap) / 60000);
     return Math.max(1, mins);
+  }
+
+  function goalBase(t) {
+    return t.laps.length ? t.laps[t.laps.length - 1].total : 0;
+  }
+
+  function goalProgress(t) {
+    return Math.max(0, getElapsed(t) - goalBase(t));
   }
 
   function goalLabel(ms) {
@@ -756,7 +762,7 @@
       colorIdx,
       notifyEnabled,
       notifyStepMin,
-      exclusiveMode,
+      goalMs,
       timers: timers.map(t => ({
         id: t.id,
         title: t.el.titleInput.value,
@@ -766,7 +772,6 @@
         startEpoch: t.startEpoch,
         laps: t.laps,
         runSince: t.runSince,
-        goalMs: t.goalMs,
         goalNotified: t.goalNotified,
         pausedAt: t.pausedAt,
         idleNotified: t.idleNotified
@@ -824,9 +829,8 @@
     if (!running) runSince = null;
     const pausedAt = Number.isFinite(st.pausedAt) && st.pausedAt > 0 ? st.pausedAt : null;
     const idleNotified = !!st.idleNotified;
-    const goalMs = Number.isFinite(st.goalMs) && st.goalMs > 0 && st.goalMs <= MAX_GOAL_MS ? Math.round(st.goalMs) : null;
     const goalNotified = !!st.goalNotified;
-    return { id, title, color, elapsedBase, running, startEpoch, laps, runSince, pausedAt, idleNotified, goalMs, goalNotified };
+    return { id, title, color, elapsedBase, running, startEpoch, laps, runSince, pausedAt, idleNotified, goalNotified };
   }
 
 
@@ -975,11 +979,12 @@
     let dirty = false;
 
     for (const t of timers) {
-      if (t.goalMs && !t.goalNotified && getElapsed(t) >= t.goalMs) {
+      if (goalMs && !t.goalNotified && goalProgress(t) >= goalMs) {
         t.goalNotified = true;
         dirty = true;
         if (notifyEnabled) {
-          notify(t, `${timerName(t)} reached its goal`, `${goalLabel(t.goalMs)} target hit · ${timeString(getElapsed(t))}`);
+          const where = t.laps.length ? `on lap ${t.laps.length + 1}` : 'target hit';
+          notify(t, `${timerName(t)} reached the goal`, `${goalLabel(goalMs)} ${where} · ${timeString(getElapsed(t))}`);
         }
       }
       if (!notifyEnabled) continue;
@@ -1004,25 +1009,23 @@
   }
 
   function updateGoalUI(t) {
-    if (t.el.goalInput.style.display === 'block') return;
-    if (!t.goalMs) {
-      t.el.goalSet.style.display = 'inline-block';
-      t.el.goalView.style.display = 'none';
+    if (!goalMs) {
+      t.el.goalRow.style.display = 'none';
       t.el.card.classList.remove('goal-done');
       return;
     }
-    t.el.goalSet.style.display = 'none';
-    t.el.goalView.style.display = 'flex';
-    const elapsed = getElapsed(t);
-    const ratio = Math.min(1, elapsed / t.goalMs);
-    const done = elapsed >= t.goalMs;
+    t.el.goalRow.style.display = 'flex';
+    const progress = goalProgress(t);
+    const ratio = Math.min(1, progress / goalMs);
+    const done = progress >= goalMs;
     t.el.goalFill.style.width = `${(ratio * 100).toFixed(1)}%`;
     t.el.goalFill.style.background = t.color;
     t.el.card.style.setProperty('--goal-color', t.color);
     t.el.card.classList.toggle('goal-done', done);
+    const prefix = t.laps.length ? `L${t.laps.length + 1} ` : '';
     t.el.goalText.textContent = done
-      ? `GOAL ${goalLabel(t.goalMs)} REACHED`
-      : `GOAL ${goalLabel(t.goalMs)} · ${Math.floor(ratio * 100)}%`;
+      ? `${prefix}GOAL ${goalLabel(goalMs)} REACHED`
+      : `${prefix}GOAL ${goalLabel(goalMs)} · ${Math.floor(ratio * 100)}%`;
   }
 
   function updateCardMeta(now) {
@@ -1126,9 +1129,7 @@
 
   function startTimer(t) {
     if (t.running) return;
-    if (exclusiveMode) {
-      for (const other of timers) if (other !== t) pauseTimer(other);
-    }
+    for (const other of timers) if (other !== t) pauseTimer(other);
     const now = Date.now();
     t.running = true;
     t.startEpoch = now;
@@ -1148,20 +1149,6 @@
     running.slice(1).forEach(pauseTimer);
   }
 
-  function toggleExclusive() {
-    exclusiveMode = !exclusiveMode;
-    if (exclusiveMode) enforceExclusive();
-    refreshExclusiveUI();
-    updateStats();
-    updateCardMeta(Date.now());
-    saveStateImmediate();
-  }
-
-  function refreshExclusiveUI() {
-    exclusiveBtn.classList.toggle('on', exclusiveMode);
-    exclusiveBtn.setAttribute('aria-pressed', exclusiveMode ? 'true' : 'false');
-  }
-
   function toggleStart(t) {
     requestPermissionOnce();
     if (t.running) pauseTimer(t); else startTimer(t);
@@ -1176,10 +1163,13 @@
     const prevTotal = t.laps.length ? t.laps[t.laps.length - 1].total : 0;
     const split = total - prevTotal;
     t.laps.push({ total, split });
+    t.runSince = Date.now();
+    t.goalNotified = false;
 
     t.el.lapsSection.style.display = 'block';
     t.el.lapsCount.textContent = t.laps.length;
     appendLapRow(t, t.laps.length, split, total);
+    updateCardMeta(Date.now());
     saveStateImmediate();
   }
 
@@ -1194,37 +1184,42 @@
     t.el.lapsList.insertBefore(row, t.el.lapsList.firstChild);
   }
 
-  function openGoalEditor(t) {
-    t.el.goalSet.style.display = 'none';
-    t.el.goalView.style.display = 'none';
-    t.el.goalInput.style.display = 'block';
-    t.el.goalInput.classList.remove('invalid');
-    t.el.goalInput.value = t.goalMs ? goalInputValue(t.goalMs) : '';
-    t.el.goalInput.focus();
-    t.el.goalInput.select();
+  function refreshGoalControl() {
+    goalOpenBtn.style.display = 'flex';
+    goalField.style.display = 'none';
+    goalOpenText.textContent = goalMs ? goalLabel(goalMs) : 'SET';
+    goalWipeBtn.style.display = goalMs ? 'block' : 'none';
+    goalControl.classList.toggle('active', !!goalMs);
   }
 
-  function closeGoalEditor(t) {
-    t.el.goalInput.style.display = 'none';
-    t.el.goalInput.classList.remove('invalid');
-    updateGoalUI(t);
+  function openGoalEditor() {
+    goalOpenBtn.style.display = 'none';
+    goalWipeBtn.style.display = 'none';
+    goalField.style.display = 'block';
+    goalField.classList.remove('invalid');
+    goalField.value = goalMs ? goalInputValue(goalMs) : '';
+    goalField.focus();
+    goalField.select();
   }
 
-  function clearGoal(t) {
-    t.goalMs = null;
-    t.goalNotified = false;
-    closeGoalEditor(t);
+  function closeGoalEditor() {
+    goalField.classList.remove('invalid');
+    refreshGoalControl();
+  }
+
+  function applyGoal(ms) {
+    goalMs = ms;
+    for (const t of timers) t.goalNotified = ms ? goalProgress(t) >= ms : false;
+    closeGoalEditor();
+    updateCardMeta(Date.now());
     saveStateImmediate();
   }
 
-  function commitGoal(t) {
-    if (!t.el.goalInput.value.trim()) { clearGoal(t); return; }
-    const parsed = parseGoal(t.el.goalInput.value);
-    if (!parsed) { t.el.goalInput.classList.add('invalid'); return; }
-    t.goalMs = parsed;
-    t.goalNotified = getElapsed(t) >= parsed;
-    closeGoalEditor(t);
-    saveStateImmediate();
+  function commitGoal() {
+    if (!goalField.value.trim()) { applyGoal(null); return; }
+    const parsed = parseGoal(goalField.value);
+    if (!parsed) { goalField.classList.add('invalid'); return; }
+    applyGoal(parsed);
   }
 
   function resetTimer(t) {
@@ -1255,21 +1250,6 @@
     }, 180);
   }
 
-  function clearAllData() {
-    if (!window.confirm('Are you sure you want to delete all stopwatches and saved data? This action cannot be undone.')) return;
-    timers.slice().forEach(t => t.el.card.remove());
-    timers = [];
-    nextId = 1;
-    colorIdx = 0;
-    if (storageAvailable) {
-      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
-    }
-    updateEmptyState();
-    updateStats();
-    createTimerCard({ title: 'Stopwatch 1' });
-    saveStateImmediate();
-  }
-
 
   function createTimerCard(opts) {
     opts = opts || {};
@@ -1293,7 +1273,6 @@
       startEpoch: opts.startEpoch || null,
       laps: Array.isArray(opts.laps) ? opts.laps.slice() : [],
       runSince: Number.isFinite(opts.runSince) ? opts.runSince : null,
-      goalMs: Number.isFinite(opts.goalMs) && opts.goalMs > 0 ? opts.goalMs : null,
       goalNotified: !!opts.goalNotified,
       pausedAt: Number.isFinite(opts.pausedAt) ? opts.pausedAt : null,
       idleNotified: !!opts.idleNotified
@@ -1319,13 +1298,8 @@
       </div>
       <div class="next-ping"></div>
       <div class="goal-row">
-        <button class="goal-set" type="button">+ SET GOAL</button>
-        <div class="goal-view">
-          <div class="goal-bar"><div class="goal-fill"></div></div>
-          <span class="goal-text"></span>
-          <button class="goal-clear" type="button" title="Remove goal" aria-label="Remove goal">&times;</button>
-        </div>
-        <input class="goal-input" type="text" maxlength="12" spellcheck="false" placeholder="90m · 2h · 1:30 · 0:45:00" aria-label="Goal duration">
+        <div class="goal-bar"><div class="goal-fill"></div></div>
+        <span class="goal-text"></span>
       </div>
       <div class="controls">
         <button class="btn btn-main">Start</button>
@@ -1349,12 +1323,9 @@
       timeMain: card.querySelector('.time-main'),
       timeCs: card.querySelector('.time-cs'),
       nextPing: card.querySelector('.next-ping'),
-      goalSet: card.querySelector('.goal-set'),
-      goalView: card.querySelector('.goal-view'),
-      goalBar: card.querySelector('.goal-bar'),
+      goalRow: card.querySelector('.goal-row'),
       goalFill: card.querySelector('.goal-fill'),
       goalText: card.querySelector('.goal-text'),
-      goalInput: card.querySelector('.goal-input'),
       mainBtn: card.querySelector('.btn-main'),
       lapBtn: card.querySelector('.btn-lap'),
       resetBtn: card.querySelector('.btn-reset'),
@@ -1372,16 +1343,6 @@
     t.el.lapBtn.addEventListener('click', () => addLap(t));
     t.el.resetBtn.addEventListener('click', () => resetTimer(t));
     t.el.card.querySelector('.btn-close').addEventListener('click', () => removeTimer(t));
-    t.el.goalSet.addEventListener('click', () => openGoalEditor(t));
-    t.el.goalText.addEventListener('click', () => openGoalEditor(t));
-    t.el.goalClear = card.querySelector('.goal-clear');
-    t.el.goalClear.addEventListener('click', () => clearGoal(t));
-    t.el.goalInput.addEventListener('input', () => t.el.goalInput.classList.remove('invalid'));
-    t.el.goalInput.addEventListener('keydown', ev => {
-      if (ev.key === 'Enter') { ev.preventDefault(); commitGoal(t); }
-      else if (ev.key === 'Escape') { ev.preventDefault(); closeGoalEditor(t); }
-    });
-    t.el.goalInput.addEventListener('blur', () => closeGoalEditor(t));
     t.el.titleInput.addEventListener('input', scheduleSave);
     t.el.titleInput.addEventListener('blur', saveStateImmediate);
 
@@ -1412,11 +1373,16 @@
     saveStateImmediate();
   });
 
-  clearBtn.addEventListener('click', clearAllData);
-
-  exclusiveBtn.addEventListener('click', toggleExclusive);
-
   intervalButtons.forEach(b => b.addEventListener('click', () => applyInterval(Number(b.dataset.min))));
+
+  goalOpenBtn.addEventListener('click', openGoalEditor);
+  goalWipeBtn.addEventListener('click', () => applyGoal(null));
+  goalField.addEventListener('input', () => goalField.classList.remove('invalid'));
+  goalField.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') { ev.preventDefault(); commitGoal(); }
+    else if (ev.key === 'Escape') { ev.preventDefault(); closeGoalEditor(); }
+  });
+  goalField.addEventListener('blur', closeGoalEditor);
 
   notifyBtn.addEventListener('click', () => {
     if (!NOTIFY_SUPPORTED || Notification.permission === 'denied') return;
@@ -1466,7 +1432,7 @@
         colorIdx = Number.isFinite(saved.colorIdx) ? saved.colorIdx : 0;
         if (typeof saved.notifyEnabled === 'boolean') notifyEnabled = saved.notifyEnabled;
         if (NOTIFY_INTERVALS.indexOf(saved.notifyStepMin) !== -1) notifyStepMin = saved.notifyStepMin;
-        if (typeof saved.exclusiveMode === 'boolean') exclusiveMode = saved.exclusiveMode;
+        if (Number.isFinite(saved.goalMs) && saved.goalMs > 0 && saved.goalMs <= MAX_GOAL_MS) goalMs = Math.round(saved.goalMs);
         saved.timers.forEach(raw => {
           const clean = sanitizeTimerData(raw);
           if (clean && clean.id !== null) { createTimerCard(clean); restoredAny = true; }
@@ -1487,8 +1453,8 @@
 
     refreshNotifyUI();
     refreshIntervalUI();
-    refreshExclusiveUI();
-    if (exclusiveMode) enforceExclusive();
+    refreshGoalControl();
+    enforceExclusive();
     if (timers.some(t => t.running)) ensureLoop();
     checkNotifications();
     saveStateImmediate();
