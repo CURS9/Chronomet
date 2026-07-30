@@ -145,6 +145,43 @@
   .btn-notify.blocked{ color:var(--warn); border-color:rgba(255,178,56,0.35); }
   .btn-notify.blocked .bell-dot{ background:var(--warn); }
 
+  .interval-select{
+    display:flex;align-items:center;gap:2px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:3px 9px 3px 3px;
+    transition:opacity .15s ease;
+  }
+  .interval-select.disabled{ opacity:.35; pointer-events:none; }
+  .interval-eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:9.5px;
+    letter-spacing:0.12em;
+    color:var(--text-faint);
+    padding:0 5px;
+    user-select:none;
+  }
+  .interval-select button{
+    background:transparent;
+    border:none;
+    color:var(--text-faint);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    font-weight:500;
+    padding:5px 8px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+    touch-action: manipulation;
+  }
+  .interval-select button:hover:not(.active){ color:var(--text); }
+  .interval-select button.active{
+    background:#3ddc97;
+    color:#0b1410;
+    font-weight:700;
+  }
+
   .btn-clear{
     background:transparent;
     border:1px solid var(--border);
@@ -468,7 +505,15 @@
           <span class="pulse-dot"></span>
           <span id="statsText">0 active</span>
         </div>
-        <button class="btn-notify" id="notifyBtn" title="Remind me every 30 minutes">
+        <div class="interval-select" id="intervalSelect" title="How often reminders fire">
+          <span class="interval-eyebrow">EVERY</span>
+          <button type="button" data-min="15">15</button>
+          <button type="button" data-min="30">30</button>
+          <button type="button" data-min="45">45</button>
+          <button type="button" data-min="60">60</button>
+          <span class="interval-eyebrow">MIN</span>
+        </div>
+        <button class="btn-notify" id="notifyBtn" title="Reminders while running and after a pause">
           <span class="bell-dot"></span>
           <span id="notifyBtnText">Enable notifications</span>
         </button>
@@ -482,7 +527,7 @@
 
     <div class="grid" id="grid"></div>
 
-    <p class="footnote">Stopwatches are saved automatically in this browser (local storage) — even if the page is closed, refreshed, or the browser crashes, it will continue from where you left off.<br>Note: using a different browser, incognito tab, or clearing cache will reset the saved data; if multiple tabs are open at the same time, the one that saves last wins.<br>Notifications: a running stopwatch pings every 30 minutes; a paused one pings once if it is not restarted within 30 minutes. A stopwatch sitting at 00:00 never triggers anything, and the tab must stay open.</p>
+    <p class="footnote">Stopwatches are saved automatically in this browser (local storage) — even if the page is closed, refreshed, or the browser crashes, it will continue from where you left off.<br>Note: using a different browser, incognito tab, or clearing cache will reset the saved data; if multiple tabs are open at the same time, the one that saves last wins.<br>Notifications: a running stopwatch pings at the interval you pick; a paused one pings once if it is not restarted within that same interval. Starting, pausing, resetting, or changing the interval restarts the countdown. A stopwatch sitting at 00:00 never triggers anything, and the tab must stay open.</p>
   </div>
 
 <script>
@@ -494,8 +539,8 @@
   const STORAGE_KEY = 'split-stopwatch-state-v1';
   const AUTOSAVE_INTERVAL_MS = 3000;
   const SAVE_DEBOUNCE_MS = 400;
-  const NOTIFY_STEP_MS = 30 * 60 * 1000;
-  const IDLE_NOTIFY_MS = 30 * 60 * 1000;
+  const NOTIFY_INTERVALS = [15, 30, 45, 60];
+  const DEFAULT_INTERVAL_MIN = 30;
   const NOTIFY_CHECK_MS = 1000;
   const MIN_ACTIVE_MS = 1000;
 
@@ -506,6 +551,8 @@
   const clearBtn = document.getElementById('clearBtn');
   const notifyBtn = document.getElementById('notifyBtn');
   const notifyBtnText = document.getElementById('notifyBtnText');
+  const intervalSelect = document.getElementById('intervalSelect');
+  const intervalButtons = Array.prototype.slice.call(intervalSelect.querySelectorAll('button'));
   const storageStatusEl = document.getElementById('storageStatus');
   const storageStatusTextEl = document.getElementById('storageStatusText');
 
@@ -519,6 +566,7 @@
   let loopActive = false;
   let saveDebounceHandle = null;
   let notifyEnabled = true;
+  let notifyStepMin = DEFAULT_INTERVAL_MIN;
   let permissionAsked = false;
   let titleFlashHandle = null;
   let audioCtx = null;
@@ -542,12 +590,13 @@
     return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}.${pad(cs)}` : `${pad(m)}:${pad(s)}.${pad(cs)}`;
   }
 
-  function durationLabel(mins) {
-    if (mins < 60) return `${mins} minutes`;
-    const h = Math.floor(mins / 60);
-    const rem = mins % 60;
-    const hLabel = h === 1 ? '1 hour' : `${h} hours`;
-    return rem ? `${hLabel} ${rem} minutes` : hLabel;
+  function stepMs() {
+    return notifyStepMin * 60000;
+  }
+
+  function clampMinutes(remaining, cap) {
+    const mins = Math.ceil(Math.min(Math.max(remaining, 0), cap) / 60000);
+    return Math.max(1, mins);
   }
 
   function getElapsed(t) {
@@ -590,6 +639,7 @@
       nextId,
       colorIdx,
       notifyEnabled,
+      notifyStepMin,
       timers: timers.map(t => ({
         id: t.id,
         title: t.el.titleInput.value,
@@ -598,7 +648,7 @@
         running: t.running,
         startEpoch: t.startEpoch,
         laps: t.laps,
-        notifiedStep: t.notifiedStep,
+        runSince: t.runSince,
         pausedAt: t.pausedAt,
         idleNotified: t.idleNotified
       }))
@@ -650,10 +700,12 @@
           .filter(l => l && Number.isFinite(l.total) && Number.isFinite(l.split))
           .map(l => ({ total: l.total, split: l.split }))
       : [];
-    const notifiedStep = Number.isFinite(st.notifiedStep) && st.notifiedStep >= 0 ? Math.floor(st.notifiedStep) : 0;
+    let runSince = Number.isFinite(st.runSince) && st.runSince > 0 ? st.runSince : null;
+    if (running && !runSince) runSince = Date.now();
+    if (!running) runSince = null;
     const pausedAt = Number.isFinite(st.pausedAt) && st.pausedAt > 0 ? st.pausedAt : null;
     const idleNotified = !!st.idleNotified;
-    return { id, title, color, elapsedBase, running, startEpoch, laps, notifiedStep, pausedAt, idleNotified };
+    return { id, title, color, elapsedBase, running, startEpoch, laps, runSince, pausedAt, idleNotified };
   }
 
 
@@ -683,7 +735,7 @@
     }
     if (Notification.permission === 'default') {
       notifyBtnText.textContent = 'Enable notifications';
-      notifyBtn.title = 'Allow notifications to get a reminder every 30 minutes';
+      notifyBtn.title = 'Allow notifications to get running and restart reminders';
       return;
     }
     if (notifyEnabled) {
@@ -694,6 +746,25 @@
       notifyBtnText.textContent = 'Notifications off';
       notifyBtn.title = 'Turn notifications on';
     }
+  }
+
+  function refreshIntervalUI() {
+    intervalButtons.forEach(b => b.classList.toggle('active', Number(b.dataset.min) === notifyStepMin));
+    const usable = NOTIFY_SUPPORTED && Notification.permission !== 'denied' && notifyEnabled;
+    intervalSelect.classList.toggle('disabled', !usable);
+  }
+
+  function applyInterval(mins) {
+    if (NOTIFY_INTERVALS.indexOf(mins) === -1 || mins === notifyStepMin) return;
+    notifyStepMin = mins;
+    const now = Date.now();
+    for (const t of timers) {
+      if (t.running) t.runSince = now;
+      else if (t.pausedAt && !t.idleNotified) t.pausedAt = now;
+    }
+    refreshIntervalUI();
+    updateNextPingLabels(now);
+    saveStateImmediate();
   }
 
   function requestPermissionOnce() {
@@ -785,19 +856,17 @@
 
     for (const t of timers) {
       if (t.running) {
-        const elapsed = getElapsed(t);
-        if (elapsed < MIN_ACTIVE_MS) continue;
-        const step = Math.floor(elapsed / NOTIFY_STEP_MS);
-        if (step > t.notifiedStep) {
-          t.notifiedStep = step;
+        if (!t.runSince) { t.runSince = now; dirty = true; continue; }
+        if (now - t.runSince >= stepMs()) {
+          t.runSince = now;
           dirty = true;
-          notify(t, `${timerName(t)} is running`, `${durationLabel(step * 30)} elapsed · ${timeString(elapsed)}`);
+          notify(t, `${timerName(t)} is running`, `${notifyStepMin} minutes without a pause · ${timeString(getElapsed(t))}`);
         }
       } else if (t.pausedAt && !t.idleNotified && t.elapsedBase >= MIN_ACTIVE_MS) {
-        if (now - t.pausedAt >= IDLE_NOTIFY_MS) {
+        if (now - t.pausedAt >= stepMs()) {
           t.idleNotified = true;
           dirty = true;
-          notify(t, `${timerName(t)} is paused`, `Not restarted for 30 minutes · ${timeString(t.elapsedBase)}`);
+          notify(t, `${timerName(t)} is paused`, `Not restarted for ${notifyStepMin} minutes · ${timeString(t.elapsedBase)}`);
         }
       }
     }
@@ -811,18 +880,19 @@
       const el = t.el.nextPing;
       if (!notifyEnabled) { el.textContent = ''; continue; }
 
+      const ms = stepMs();
       if (t.running) {
-        const elapsed = getElapsed(t);
-        if (elapsed < MIN_ACTIVE_MS) { el.textContent = ''; continue; }
-        const remaining = NOTIFY_STEP_MS - (elapsed % NOTIFY_STEP_MS);
-        el.textContent = `NEXT REMINDER · ${Math.max(1, Math.ceil(remaining / 60000))} MIN`;
+        const remaining = ms - (now - (t.runSince || now));
+        el.textContent = `NEXT REMINDER · ${clampMinutes(remaining, ms)} MIN`;
       } else if (t.pausedAt && !t.idleNotified && t.elapsedBase >= MIN_ACTIVE_MS) {
-        const remaining = IDLE_NOTIFY_MS - (now - t.pausedAt);
+        const remaining = ms - (now - t.pausedAt);
         el.textContent = remaining > 0
-          ? `RESTART REMINDER · ${Math.max(1, Math.ceil(remaining / 60000))} MIN`
+          ? `RESTART REMINDER · ${clampMinutes(remaining, ms)} MIN`
           : '';
-      } else {
+      } else if (t.pausedAt && t.idleNotified) {
         el.textContent = '';
+      } else {
+        el.textContent = `NEXT REMINDER · ${notifyStepMin} MIN`;
       }
     }
   }
@@ -895,6 +965,7 @@
     if (!t.running) {
       t.running = true;
       t.startEpoch = Date.now();
+      t.runSince = Date.now();
       t.pausedAt = null;
       t.idleNotified = false;
       t.el.card.classList.add('is-running');
@@ -903,6 +974,7 @@
       t.elapsedBase += Math.max(0, Date.now() - t.startEpoch);
       t.running = false;
       t.startEpoch = null;
+      t.runSince = null;
       t.idleNotified = false;
       t.pausedAt = t.elapsedBase >= MIN_ACTIVE_MS ? Date.now() : null;
       t.el.card.classList.remove('is-running');
@@ -942,7 +1014,7 @@
     if (t.running) return;
     t.elapsedBase = 0;
     t.laps = [];
-    t.notifiedStep = 0;
+    t.runSince = null;
     t.pausedAt = null;
     t.idleNotified = false;
     t.el.lapsList.innerHTML = '';
@@ -1002,7 +1074,7 @@
       running: !!opts.running,
       startEpoch: opts.startEpoch || null,
       laps: Array.isArray(opts.laps) ? opts.laps.slice() : [],
-      notifiedStep: Number.isFinite(opts.notifiedStep) ? opts.notifiedStep : 0,
+      runSince: Number.isFinite(opts.runSince) ? opts.runSince : null,
       pausedAt: Number.isFinite(opts.pausedAt) ? opts.pausedAt : null,
       idleNotified: !!opts.idleNotified
     };
@@ -1096,17 +1168,21 @@
 
   clearBtn.addEventListener('click', clearAllData);
 
+  intervalButtons.forEach(b => b.addEventListener('click', () => applyInterval(Number(b.dataset.min))));
+
   notifyBtn.addEventListener('click', () => {
     if (!NOTIFY_SUPPORTED || Notification.permission === 'denied') return;
     if (Notification.permission === 'default') {
       permissionAsked = false;
       requestPermissionOnce();
       notifyEnabled = true;
+      refreshIntervalUI();
       saveStateImmediate();
       return;
     }
     notifyEnabled = !notifyEnabled;
     refreshNotifyUI();
+    refreshIntervalUI();
     updateNextPingLabels(Date.now());
     saveStateImmediate();
   });
@@ -1141,6 +1217,7 @@
         nextId = Number.isFinite(saved.nextId) ? saved.nextId : 1;
         colorIdx = Number.isFinite(saved.colorIdx) ? saved.colorIdx : 0;
         if (typeof saved.notifyEnabled === 'boolean') notifyEnabled = saved.notifyEnabled;
+        if (NOTIFY_INTERVALS.indexOf(saved.notifyStepMin) !== -1) notifyStepMin = saved.notifyStepMin;
         saved.timers.forEach(raw => {
           const clean = sanitizeTimerData(raw);
           if (clean && clean.id !== null) { createTimerCard(clean); restoredAny = true; }
@@ -1160,6 +1237,7 @@
     }
 
     refreshNotifyUI();
+    refreshIntervalUI();
     if (timers.some(t => t.running)) ensureLoop();
     checkNotifications();
     saveStateImmediate();
